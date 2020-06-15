@@ -35,7 +35,7 @@ class player(object):
         self.carryweight = 50
         self.armoreq = {'Headgear': NoArmor, 'Chest': NoArmor, 'Arms': NoArmor, 'Legs': NoArmor, 'Feet': NoArmor, 'Bonus': NoArmor}
         self.armor = [0, 0]
-        self.weapon = Greatclub
+        self.weapon = None
     def armorcalc(self):
         # Match Current Armor Value to Reflect Equipped Armor and Occupation Bonuses
         physarmor = 0
@@ -81,18 +81,18 @@ class player(object):
     # Handles equipping of Armor and Weapons        
     def equiparmor(self,invarmor,location):
         if invarmor in self.inv:
-            if invarmor is type(armor) and (invarmor.atype == 'All' or location):
-                print "You equipped your %s on your %s." %(invarmor.name, location)
+            if isinstance(invarmor, armor) == True and (invarmor.atype in ('All', location)):
+                print "You equipped your %s on your %s slot." %(invarmor.name, location)
                 self.armoreq[location] = invarmor
                 self.armorcalc()   
             else:
-                print "You cannot equip that as an armor!"
+                print "You cannot equip that as an armor in that spot!"
         else:
             print "You don't have that in your inventory!"
             
     def equipweapon(self,invweapon):
         if invweapon in self.inv:
-            if invweapon is type(weapon):
+            if isinstance(invweapon, weapon):
                 print "You equipped your %s as a weapon. This weapon does %s damage." %(invweapon.name,invweapon.dmg)
                 self.weapon = invweapon
             else:
@@ -166,16 +166,16 @@ IronGauntlets = armor("Iron Gauntlets", 2, 1, 'Arms', "Sturdy iron gauntlets. A 
 SturdyBoots = armor("Sturdy Boots", 2, 0, 'Feet', "Nice, rugged boots. Great for stomping around taverns and stepping on small rocks.", 2, 10)
 
 # Create Skills
-MultiAttack = skill('Multi-Attack','Combat Skill. Allows for two attacks in a row next turn.', 3)
-Spellcasting = skill('Spellcasting','Allows for the casting of spells with a spellbook, inside or outside combat.', -1)
-Sneak = skill('Sneak','Provides a major bonus for sneak checks.', 5)
-Networking = skill('Networking','Allows for cheaper shop rates and connections to the criminal underground.', -1)
-Rage = skill('Rage','Combat Skill. Enter a frenzy for the next 2 rounds that allows for increased attack but decreased defense', 3)
-UnarmedStrike = skill('Unarmed Strike','Combat Skill. Strike without a weapon, dealing damage equal to (STR+INT)/5', 3)
-Dodge = skill('Dodge','Combat Skill. Negate all enemy damage when they next attack.', 3)
-FormShift = skill('Form Shift','Combat Skill. For the next 3 rounds, enter beast form, boosting STR, DEX, and CON stats by 3 and physical damage by 4.', 2)
-Smite = skill('Smite','Combat Skill. Use devine powers to deal 5 damage to opponent, and an additional 5 if they are undead.', 3)
-Disengage = skill('Disengage','Combat Skill. Sink into the shadows and retreat to a safer distance, providing some time before the enemy can catch up', 2)
+MultiAttack = skill('Multi-Attack',"'Combat Skill. Allows for two attacks in a row next turn.'", 3)
+Spellcasting = skill('Spellcasting',"'Allows for the casting of spells with a spellbook, inside or outside combat.'", -1)
+Sneak = skill('Sneak',"'Provides a major bonus for sneak checks.'", 5)
+Networking = skill('Networking',"'Allows for cheaper shop rates and connections to the criminal underground.'", -1)
+Rage = skill('Rage',"'Combat Skill. Enter a frenzy for the next 2 rounds that allows for increased attack but decreased defense'", 3)
+UnarmedStrike = skill('Unarmed Strike',"'Combat Skill. Strike without a weapon, dealing damage equal to (STR+INT)/5'", 3)
+Dodge = skill('Dodge',"'Combat Skill. Negate all enemy damage when they next attack.'", 3)
+FormShift = skill('Form Shift',"'Combat Skill. For the next 3 rounds, enter beast form, boosting STR, DEX, and CON stats by 3 and physical damage by 4.'", 2)
+Smite = skill('Smite',"'Combat Skill. Use devine powers to deal 5 damage to opponent, and an additional 5 if they are undead.'", 3)
+Disengage = skill('Disengage',"'Combat Skill. Sink into the shadows and retreat to a safer distance, providing some time before the enemy can catch up'", 2)
 
 
 # Create Occupations
@@ -194,7 +194,17 @@ occupation_list = []
 for obj in gc.get_objects():
     if isinstance(obj, occupation):
         occupation_list.append(obj)
-        
+# Do the same for weapons. Absolutley epic.
+weapons_list = []
+for obj in gc.get_objects():
+    if isinstance(obj, weapon):
+        weapons_list.append(obj)
+# And now for armors. Shoot me.
+armor_list = []
+for obj in gc.get_objects():
+    if isinstance(obj, armor):
+        armor_list.append(obj)
+
 # Make player object, then fill it with the default bullshit        
 Player = player(0,0,0,0,0,0,0,0,0,0,0,0)
 Player.defaultattributes()
@@ -209,6 +219,10 @@ def CharacterCreation():
     print "Hello, %s." %Player.name
     print "Please tell us a little bit about %s." %Player.name
     Player.desc['sex'] = raw_input("What is your preffered sexual gender? (M/F/?)  > ")
+    if Player.desc['sex'].lower() in ('m','man'):
+        Player.desc['sex'] = 'male'
+    if Player.desc['sex'].lower() in ('f','girl','woman','w'):
+        Player.desc['sex'] = 'female'
     Player.desc['height'] = raw_input("What is your player's height? (in inches)  > ")
     Player.desc['eyecolor'] = raw_input("What is your player's eyecolor?  > ")
     Player.desc['haircolor'] = raw_input("What is your player's haircolor?  > ")
@@ -343,6 +357,7 @@ def PlayerMenu():
         # Display Inventory
         if choice in ('i','inv','inventory'):
             print "--%s's Inventory--" %Player.name
+            print
             totalweight = 0
             for item in Player.inv:
                 try: 
@@ -362,9 +377,9 @@ def PlayerMenu():
             print '----------------------'
             print "-Equipped Armor-"
             armorweight = 0
-            for armor in Player.armoreq:
-                print "%s -- %s -- %s lbs" %(armor, Player.armoreq[armor].name, Player.armoreq[armor].weight)
-                armorweight += Player.armoreq[armor].weight
+            for parmor in Player.armoreq:
+                print "%s -- %s -- %s lbs" %(parmor, Player.armoreq[parmor].name, Player.armoreq[parmor].weight)
+                armorweight += Player.armoreq[parmor].weight
             print '----------------------'
        # Display Stats 
         if choice in ('s','stats','attribute','attributes'):
@@ -378,14 +393,15 @@ def PlayerMenu():
         # Display Skills and Descriptions
         if choice in ('x','skills','skill'):
             print "--%s's Skills--" %Player.name
-            for p_skill in Player.skill:
-                if Player.p_skill.timesperday == -1:
-                     print "%s - Infinite Times/Day - %s" %(Player.p_skill.name, Player.p_skill.desc)
+            for pskill in Player.skills:
+                if pskill.timesperday == -1:
+                     print "%s - Infinite Times/Day - %s" %(pskill.name, pskill.desc)
                 else:
-                    print "%s - %s Times/Day - %s" %(Player.p_skill.name, Player.p_skill.timesperday, Player.p_skill.desc)
+                    print "%s - %s Times/Day - %s" %(pskill.name, pskill.timesperday, pskill.desc)
             print '----------------------'
         # Display Player Description
         if choice in ('d','desc','description'):
+            print
             print Player.describe()
             print
         # Quit from Menu
@@ -395,8 +411,54 @@ def PlayerMenu():
             yn = yn.lower()
             if yn in ('y','yes'):
                 raise SystemExit
-            else:
-                pass
         # Equip Menu
         if choice in ('e','equip'):
-            print "Don't look here, it isnt finished. I don't know how im going to fucking do this bit."
+            w_or_a =  raw_input("What would you like to equip? (Weapons/Armor)  > ")
+            w_or_a = w_or_a.lower()
+            if w_or_a in ('w','wep','weapon','weapons'):
+                print "You have selected 'Weapons'. Please select a weapon to equip from your inventory."
+                for item in Player.inv:
+                    if isinstance(item, weapon):
+                        print "- %s -" %item.name
+                print
+                invweapon = raw_input('Type weapon here:  > ')
+                invweapon = invweapon.title()
+                weapons_names = []
+                for obj in weapons_list:
+                    weapons_names.append(obj.name)
+                if invweapon in weapons_names:
+                    for obj in weapons_list:
+                        if invweapon == obj.name:
+                            invweapon = obj
+                            Player.equipweapon(invweapon)
+                else:
+                    print "You cannot equip that item as a weapon!"
+                
+            elif w_or_a in ('a','arm','armor'):
+                print "You have selected 'Armor'. Please select an armor to equip from your inventory."
+                for item in Player.inv:
+                    if isinstance(item, armor):
+                        print "- %s -- %s -" %(item.name, item.atype)
+                print
+                invarmor = raw_input('Type armor here:  > ')
+                invarmor = invarmor.title()
+                armor_names = []
+                for obj in armor_list:
+                    armor_names.append(obj.name)
+                if invarmor in armor_names:
+                    for obj in armor_list:
+                        if invarmor == obj.name:
+                            invarmor = obj
+                            
+                            time.sleep(1)
+                            print "Where would you like to equip this armor piece?"
+                            armorlocations = []
+                            for key in Player.armoreq:
+                                print "- %s -" %key
+                                armorlocations.append(key)
+                            location = raw_input("Please type a location.  > ")
+                            location = location.title()
+                            if location in armorlocations:
+                                Player.equiparmor(invarmor, location)
+                            else:
+                                print "Sorry, I couldn't recognize that as a valid location."
