@@ -78,6 +78,7 @@ class player(object):
                 pass
             else:
                 self.skills.append(skill)
+                
     # Handles equipping of Armor and Weapons        
     def equiparmor(self,invarmor,location):
         if invarmor in self.inv:
@@ -101,6 +102,29 @@ class player(object):
             print "You don't have that in your inventory!"
     def describe(self):
         print "Your name is %s. You are a %s who is %s inches tall. You have %s eyes, %s hair, and are %s. Your favorite pasttime is %s." %(self.name, self.desc['sex'], self.desc['height'], self.desc['eyecolor'], self.desc['haircolor'], self.desc['build'], self.desc['pasttime'])
+        
+        
+    def movement(self):
+        while True:
+            pass
+
+# Create Room Class
+class roomtile(object):
+    def __init__(self, tilemap, column, row):
+        self.playerpos = tilemap[column][row]
+        self.tilemap = tilemap
+        self.column = column
+        self.row = row
+        
+#Create Tilemaps and Room Classes
+tilemap_bar = [[0, 0, 1, 0, 0],
+               [0, 0, 0, 2, 0],
+               [0, 0, 0, 2, 0]
+               [0, 3, 0, 2, 0]
+               [0, 0, 0, 2, 2]]
+Bar = roomtile(tilemap_bar, 2,4)
+              
+
 
 # Init Weapon, Spells, Armor, Skill, and Occupation Classes
 class weapon(object):
