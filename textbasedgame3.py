@@ -5,6 +5,7 @@ import gc
 import math
 # Init player controller variables
 global statselect
+global distance
 statselect = {'Str': 0, 'Dex': 0, 'Con': 0, 'Int': 0, 'Wis': 0, 'Cha': 0}
 
 # Init Player Class
@@ -109,37 +110,40 @@ class player(object):
             pass
 
 # Create Room Class
-class roomtile(object):
-    def __init__(self, tilemap, column, row):
-        self.playerpos = tilemap[column][row]
-        self.tilemap = tilemap
+class minimap(object):
+    def __init__(self, minimap, column, row):
+        self.playerpos = minimap[column][row]
+        self.tilemap = minimap
         self.column = column
         self.row = row
         
-#Create Tilemaps and Room Classes
-tilemap_bar = [[0, 0, 1, 0, 0],
+#Create Minimaps and Room Classes
+minimap_bar = [[0, 0, 1, 0, 0],
                [0, 0, 0, 2, 0],
-               [0, 0, 0, 2, 0]
-               [0, 3, 0, 2, 0]
+               [0, 0, 0, 2, 0],
+               [0, 3, 0, 2, 0],
                [0, 0, 0, 2, 2]]
-Bar = roomtile(tilemap_bar, 2,4)
+               
+Bar = minimap(minimap_bar, 2,4)
               
 
 
 # Init Weapon, Spells, Armor, Skill, and Occupation Classes
 class weapon(object):
-    def __init__(self, name, dmg, desc, weight, cost):
+    def __init__(self, name, dmg, desc, weight, reach, cost):
         self.name = name
         self.dmg = dmg
         self.desc = desc
         self.weight = weight
+        self.reach = reach
         self.cost = cost
         
 class spell(object):
-    def __init__(self, name, dmg, effect, desc, cost):
+    def __init__(self, name, dmg, effect, reach, desc, cost):
         self.name = name
         self.dmg = dmg
         self.effect = effect
+        self.reach = reach
         self.desc = desc
         self.cost = cost
         
@@ -169,17 +173,30 @@ class occupation(object):
         self.desc = desc
         self.skills = skills
         
+class enemy(object):
+    def __init__(self, name, desc, maxhp, hp, inv, armor, weapon, ai):
+        self.name = name
+        self.desc = desc
+        self.maxhp = maxhp
+        self.hp = hp
+        self.inv = inv
+        self.armor = armor
+        self.weapon = weapon
+        self.ai = ai
+    def enemyplan(self):
+        pass
+        
 # Create Weapons
-Stick = weapon("A Large Stick", 1, "This is the stick you found on the side of a road.", 1, 0)
-Longsword = weapon("Longsword", 5, "A longsword. a trusty weapon viewed highly by any upstanding adventurer.", 3, 20)
-Dagger = weapon("Dagger", 2, "A short, concealable dagger. Dangerous in any hands, but especially by those with cunning.", 0, 5)
-Greatclub = weapon("Greatclub", 4, "A massive wooden club. It looks heavy, but you are sure that in the right hands it could be devastating.", 5, 7)
-Warhammer = weapon("Warhammer", 5, "A very large, two handed hammer. Favored by religous fighters, this weapon is incredibly powerful",4, 20)
-Longbow = weapon("Longbow", 5, "A large, powerful bow, complete with arrows. The weapon of a true huntsman.",3, 20)
-Quarterstaff = weapon("Quarterstaff", 3, "A long, hardwood stave, capable of dealing large amounts of blugeoning damage when in the right hands.", 2, 5)
+Stick = weapon("A Large Stick", 1, "This is the stick you found on the side of a road.", 1, [0,10], 0)
+Longsword = weapon("Longsword", 5, "A longsword. a trusty weapon viewed highly by any upstanding adventurer.", 3, [0,15], 20)
+Dagger = weapon("Dagger", 2, "A short, concealable dagger. Dangerous in any hands, but especially by those with cunning.", 0, [0,10], 5)
+Greatclub = weapon("Greatclub", 4, "A massive wooden club. It looks heavy, but you are sure that in the right hands it could be devastating.", 5, [0,15], 7)
+Warhammer = weapon("Warhammer", 5, "A very large, two handed hammer. Favored by religous fighters, this weapon is incredibly powerful", 4, [0,10], 20)
+Longbow = weapon("Longbow", 5, "A large, powerful bow, complete with arrows. The weapon of a true huntsman.",3, [15,60], 20)
+Quarterstaff = weapon("Quarterstaff", 3, "A long, hardwood stave, capable of dealing large amounts of blugeoning damage when in the right hands.", 2, [0,15], 5)
 
 # Create Spells
-Fireball = spell("Fireball", 10, 'Attack', "A scroll of Fireball. Looks rather dangerous.", 20)
+Fireball = spell("Fireball", 10, 'Attack', [10,60], "A scroll of Fireball. Looks rather dangerous.", 20)
 
 # Create Armors
 NoArmor = armor("No Armor", 0, 0,'All', "You don't currently have armor equipped in this place.", 0, 0)
@@ -212,6 +229,11 @@ Monk = occupation("Monk", [2,0],[3,2],[Quarterstaff],[UnarmedStrike,Dodge],{'Str
 Druid = occupation("Druid", [0,1],[0,1],[Stick, 'Spellbook'],[FormShift,Spellcasting],{'Int':2,'Cha':1}, "You are a druid. Intelligent and in tune with nature, you use your form shift to deal devastating damage to enemies.")
 Paladin = occupation("Paladin", [1,1],[1,2],[Warhammer],[Smite,Spellcasting],{'Str':2,'Wis':1}, "You are a paladin. A strong religious fighter, you are able to use physical prowess as well as spellcasting to devastating effect.")
 Ranger = occupation("Ranger", [2,0],[1,1],[Longbow, Dagger],[Sneak,Disengage],{'Dex':2,'Con':1}, "You are a ranger. Experienced in hunting and tracking, you are a deadly force that takes advantage of distance to deal with your targets.")
+
+
+# Create Enemies
+TrainingDummy = enemy("Training Dummy", "It's a training dummy. please just hit it a few times so we can move on.", 15, 15, [], [0,0], None, None)
+
 
 # Create a list of all of the current occupations, because for some reason we cant access all occupations any other way.
 occupation_list = []
@@ -486,3 +508,43 @@ def PlayerMenu():
                                 Player.equiparmor(invarmor, location)
                             else:
                                 print "Sorry, I couldn't recognize that as a valid location."
+
+# Combat will be broken up into a few phases, the first of which is the player's misc action where they can move, open the player menu, or use a skill or item.
+# The next phase is the player's dedicated attack action, where the player can strike the enemy with their active weapon or cast a spell, so long as the enemy is within the weapon's range bounds.
+    # The global distance variable is basically just going to be abs(playerdist or enemydist - distance), with a lower limit of 5 and an upper limit of the room's size
+        # Here, playerdist and enemydist are the variables the player/enemy AI
+# After that, the enemy gets their own action/attack sequence (decided by distance, health, and enemy AI)
+# Finally,                                 
+def CombatSequence(enemy, room):
+    print "There is a %s in this room! It eyes you angrily and moves in to attack!" %enemy.name
+    print "You have entered combat!"
+    print
+    while True:
+        # Print Combat Display (NOTE: WORK ON SPACING LATER THIS IS GARBAGE)
+
+        print "     -%s's Stats-        =====    -%s's Stats-" %(Player.name, enemy.name)
+        print "Max HP - %s -- Current HP - %s =====          Enemy HP - %s" %(Player.maxhp,Player.hp,enemy.hp)
+        time.sleep(0.25)
+        print
+        # Player Action Phase
+        print "This is your ACTION phase. Here, you can move, open the player menu, or use a skill or item."
+        action = raw_input("What would you like to do for your action? If you attack or cast a spell, it will skip over this phase.  > ")
+        action = set(action.split())
+        if action.intersection('move','m','go'):
+            rawdist = None
+            for num in action:  #This doesn't work, we havent converted str to int
+                if isinstance(num, int):
+                    rawdist = num
+            if action.intersection('away','back','far','farther'):
+                awayortowards = 1
+            elif action.intersection('towards','to','close','closer'):
+                awayortowards = -1
+            Movement(Player, rawdist, awayortowards)
+    
+def Movement(whosturn, rawdist, awayortowards):
+    if rawdist == None:
+        print "You didn't specify a distance!"
+    
+    
+    
+    
