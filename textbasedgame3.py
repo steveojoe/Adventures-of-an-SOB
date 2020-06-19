@@ -235,7 +235,7 @@ Ranger = occupation("Ranger", [2,0],[1,1],[Longbow, Dagger],[Sneak,Disengage],{'
 TrainingDummy = enemy("Training Dummy", "It's a training dummy. please just hit it a few times so we can move on.", 15, 15, [], [0,0], None, None)
 
 
-# Create a list of all of the current occupations, because for some reason we cant access all occupations any other way.
+# Create a list of all of the current occupations, because for some reason we cant access all occupations any other way. CONSOLIDATE
 occupation_list = []
 for obj in gc.get_objects():
     if isinstance(obj, occupation):
@@ -539,9 +539,9 @@ def CombatSequence(enemy, room):
                 awayortowards = 1
             elif action.intersection('towards','to','close','closer'):
                 awayortowards = -1
-            Movement(Player, rawdist, awayortowards)
+            CombatMovement(Player, rawdist, awayortowards)
     
-def Movement(whosturn, rawdist, awayortowards):
+def CombatMovement(whosturn, rawdist, awayortowards):
     if rawdist == None:
         print "You didn't specify a distance!"
     
